@@ -1,54 +1,64 @@
-# RcLocalizer - C++ Resource (.rc) File Localizer POC
+# RcLocalizer - C++ Resource (.rc) File Localizer
 
-This is a desktop Proof of Concept (POC) application built with **C# .NET 10 (compatible with .NET 8)** and **WPF** following the **MVVM architecture**. It combines a custom C++ resource parser/generator with the **Gemini API** for automated text translation.
+RcLocalizer is a lightweight desktop Proof of Concept (PoC) application built with **C# .NET 10 (compatible with .NET 8)** and **WPF**. It is designed to extract, translate, validate, and rebuild Windows C++ Resource Script (`.rc`) files using the **Google Gemini API**. 
+
+The application has been simplified into an event-driven **Code-Behind model** (under 200 lines per file and 10 lines per method), making it extremely readable and easy to present to CCTech and Autodesk leadership.
 
 ---
 
 ## Key Features
 
-1. **RC Parser Service**: Efficiently tokenizes `.rc` files to scan and extract translatable strings exclusively from `STRINGTABLE` blocks. It tracks exact character spans so that other elements (includes, macros, comments, registry, and formatting) are preserved.
-2. **Translation Service**: Calls the Gemini API in structured **JSON Mode** to translate text, preserving formatting and placeholders. It batches items in groups of 50 to optimize performance and context coherence.
-3. **Validation Service**: Ensures that:
-   - Resource count matches.
-   - Translations are not empty.
-   - Critical formatting placeholders (`%s`, `%d`, `%f`, `%1`, `%2`, `{0}`, `{1}`, `{2}`) and escape sequences (`\n`, `\t`) are retained.
-4. **RC Generator Service**: Replaces string literals in-place by applying changes from back to front using character offsets.
-5. **Modern WPF UI**: Sleek dark theme featuring a comprehensive DataGrid, live validation feedback badges, progress bars, and easy save options.
+1. **Secure API Key Storage**: Stores the Gemini API key in [App.config](file:///d:/AutoDesk_POC/RcLocalizer/App.config). The UI features a password field with a toggle reveal button (👁️) to show or hide the key.
+2. **Lexical RC Tokenizer & Parser**: Extracts translatable strings strictly from C++ `STRINGTABLE` blocks while ignoring macros, preprocessor directives, and comments. It tracks exact coordinate offsets to prevent file corruption.
+3. **Local & AI Validation (Side-by-Side Panel)**: 
+   - **Local Validation**: Counts formatting placeholders (like `%s`, `%d`, `{0}`) to prevent runtime application crashes.
+   - **AI QA Validation**: Sends translations to Gemini to evaluate translation accuracy, natural grammar, and UI suitability.
+   - **Visual UI**: The validation results appear in an expanding panel on the right side, keeping the main strings list always visible.
+4. **Translation Memory (Cache)**: Caches translation key-value pairs in local JSON files to bypass redundant Gemini API calls, optimizing response speed and cost.
+5. **Back-to-Front Generator**: Replaces target strings in-place starting from the end of the file, keeping coordinates of preceding text perfectly intact.
+6. **Visual Preview (Design Studio)**: A simulated CAD design dialog that dynamically reloads the localized `.rc` file, displaying localized menu bars, button layouts, and properties live.
 
 ---
 
 ## Directory Structure
 
 ```
-/Localizer_App
+/RcLocalizer
 │   App.xaml
 │   App.xaml.cs
+│   App.config                    <-- Secure app configuration settings
 │   AssemblyInfo.cs
-│   Localizer_App.csproj
-│   sample.rc                      <-- Sample Resource File for Testing
-│   README.md                      <-- You are here
+│   Localizer_App.csproj          <-- Project build settings
+│   LocalizerApp.slnx             <-- Solution file
+│   sample.rc                     <-- Sample English script file for testing
+│   sample_de-DE.rc               <-- Sample German localized script file for testing
+│   README.md                     <-- You are here
+│   RcLocalizer_Guide.md          <-- Presentation & developers guide
+│   RcLocalizer_Concepts.md       <-- Detailed technical concepts index
 │
 ├───Models
-│       ResourceString.cs          <-- Key, Text, Translated, Offset tracking
-│       TargetLanguage.cs          <-- Language metadata
-│       ValidationResult.cs        <-- Validation outcomes and error messages
-│
-├───Helpers
-│       RelayCommand.cs            <-- Standard ICommand implementation
-│       ViewModelBase.cs           <-- INotifyPropertyChanged helper
+│       PreviewResourceKeys.cs     <-- Constant string keys used by preview UI controls
+│       ResourceString.cs          <-- Data model for keys and text coordinates
+│       TargetLanguage.cs          <-- Language names and culture code metadata
+│       ValidationResult.cs        <-- Local validation summary and error reports
+│       ValStats.cs                <-- Counters used during AI QA scoring calculations
 │
 ├───Services
-│       RcGeneratorService.cs      <-- In-place text replacements
-│       RcParserService.cs         <-- Tokenizer & extractor
-│       TranslationService.cs      <-- Gemini API Client
-│       ValidationService.cs       <-- Validation checks
-│
-├───ViewModels
-│       MainViewModel.cs           <-- Main Application Logic Coordinator
+│       RcTokenizer.cs             <-- Lexical scanner converting text to tokens
+│       RcParserService.cs         <-- Extractor parsing resource blocks
+│       RcGeneratorService.cs      <-- Rebuilds translated resource script
+│       TranslationService.cs      <-- Translates lists using Gemini Service
+│       AiValidationService.cs     <-- Evaluates language quality using Gemini
+│       ValidationService.cs       <-- Local formatting placeholder counts
+│       TranslationMemoryService.cs <-- Local JSON translation cache
+│       RcResourceLoaderService.cs <-- Loads target script strings for preview
+│       GeminiService.cs           <-- Unified network REST client
 │
 └───Views
-        MainWindow.xaml            <-- High-quality WPF layout and styles
-        MainWindow.xaml.cs         <-- Code-behind
+        MainWindow.xaml            <-- UI layout with side-by-side panels
+        MainWindow.xaml.cs         <-- Code-behind event handlers & properties
+        PreviewWindow.xaml         <-- Simulation preview window
+        PreviewWindow.xaml.cs      <-- Logic to load preview dropdown values
 ```
 
 ---
@@ -56,43 +66,40 @@ This is a desktop Proof of Concept (POC) application built with **C# .NET 10 (co
 ## Setup & Running Instructions
 
 ### Prerequisites
-- [.NET SDK 10.0](https://dotnet.microsoft.com/download/dotnet/10.0) or compatible installed on your machine.
-- A **Gemini API Key**. You can obtain one from [Google AI Studio](https://aistudio.google.com/).
+- [.NET SDK 10.0](https://dotnet.microsoft.com/download/dotnet/10.0) (or compatible .NET 8.0 SDK) installed on your machine.
+- A **Gemini API Key** (obtainable from [Google AI Studio](https://aistudio.google.com/)).
 
 ### Running the App
-1. Open a command prompt or terminal in the project directory:
+1. Open a command prompt or terminal in the project directory.
+2. Build and run the project:
    ```bash
-   cd "F:\Drive I\CCtech_Documents\MCP\Localizer_App"
+   dotnet build Localizer_App.csproj
+   dotnet run --project Localizer_App.csproj
    ```
-2. Run the application:
-   ```bash
-   dotnet run
-   ```
-
-### Running the Tests
-To verify the services and parsing logic, run:
-```bash
-dotnet test LocalizerApp.Tests/LocalizerApp.Tests.csproj
-```
 
 ---
 
 ## Walkthrough: Testing with `sample.rc`
 
-A test file called `sample.rc` has been pre-packaged in the root folder of the project. Here is how to test the localization workflow:
+A test file called `sample.rc` has been pre-packaged in the root folder of the project. Follow this flow to test:
 
-1. **Launch the Application**: Start the app by running `dotnet run`.
+1. **Launch the Application**: Start the app using `dotnet run --project Localizer_App.csproj`.
 2. **Select the File**: Click **[Select RC File...]** and choose `sample.rc` in the project root.
-3. **Select Language**: Select **Hindi**, **Japanese**, **French**, or **German** from the dropdown menu.
-4. **Extract Strings**: Click **[Extract Strings]**. You will see the DataGrid fill up with 9 extracted strings, displaying keys (like `IDS_APP_TITLE` or `IDS_WELCOME_MSG`) and their original English texts.
-5. **Set API Key**: Enter your Gemini API Key in the top-right field.
-6. **Translate**: Click **[Translate (Gemini)]**. A progress bar will show up, and the app will request translations in a single optimized batch.
-7. **Review & Edit**: Once completed, the translated text will appear in the grid. You can double-click any cell in the "Translation" column to adjust the translation manually if needed.
-8. **Validation Report**: The "Validation Results" panel will display checks for:
-   - Resource Count Validation (`✔` or `❌`)
-   - Empty Translation Validation (`✔` or `❌`)
-   - Placeholder Validation (`✔` or `❌`)
-   If any placeholder (like `%s` or `%d`) is accidentally modified or omitted by the AI, validation will fail, and the specific errors will show up in the warning list.
+3. **Select Language**: Select **Japanese**, **Hindi**, **French**, or **German** from the dropdown menu.
+4. **Extract Strings**: Click **[Extract Strings]**. The grid will populate with 9 extracted strings, displaying keys and original English text.
+5. **Set API Key**: Enter your Gemini API Key in the top-right field. Toggle the reveal button (👁️) to verify characters. The key is automatically saved to [App.config](file:///d:/AutoDesk_POC/RcLocalizer/App.config).
+6. **Translate**: Click **[Translate (Gemini)]**. Misses are translated in an optimized batch, and translation memory hit rates are updated.
+7. **Validate**: Click **[Validate (Gemini)]**. The **Validation Results Panel** will appear on the right side:
+   - Green checks (✔) confirm that placeholder counts match and translation strings are not empty.
+   - The AI quality panel shows the overall QA score and rating counts.
+8. **Visual Preview**: Click **[Open Preview Window]**. Select your target language in the dropdown to see menu bars and properties panels formatted live.
 9. **Generate and Save**:
-   - Click **[Generate Localized RC]** to merge your translations back into the original file structure.
-   - Click **[Save Localized RC...]** to select a folder and save the resulting file (e.g. `sample_ja-JP.rc`).
+   - Click **[Generate Localized RC]** to merge translations in memory.
+   - Click **[Save Localized RC...]** to save the resulting script file (e.g. `ja-JP.rc`).
+
+---
+
+## Technical Resources
+For more details, check out the generated documentation in the project root:
+- [Presentation & Guide Document (RcLocalizer_Guide.md)](file:///d:/AutoDesk_POC/RcLocalizer/RcLocalizer_Guide.md): Detailed step-by-step developer architecture, button triggers, and execution flow.
+- [Technical Concepts Index (RcLocalizer_Concepts.md)](file:///d:/AutoDesk_POC/RcLocalizer/RcLocalizer_Concepts.md): Explanation of C# and WPF concepts (e.g. tokenization, async tasks, observable collections, reverse index traversals) with code examples.
