@@ -1,0 +1,64 @@
+﻿// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+#include "winres.h"
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// STRINGTABLE
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "Localizer App POC"
+    IDS_WELCOME_MSG         "Willkommen bei %s, Version %d!"
+    IDS_FILE_ERROR          "Fehler: Datei \""\""%s\""\"" konnte nicht geöffnet werden. Bitte versuchen Sie es erneut."
+    IDS_MENU_HELP           "Hilfe\tF1"
+    IDS_MULTILINE_TEST      "Dies ist Zeile 1.\nDies ist Zeile 2.\nDies ist Zeile 3."
+    IDS_BRACKET_PLACEHOLDER "Datensatz {0} von {1} wird aktualisiert..."
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SAVE                "Speichern"
+    IDS_CANCEL              "Abbrechen"
+    IDS_CLOSE               "Schließen"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////

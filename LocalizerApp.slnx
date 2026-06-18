@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LocalizerApp.Tests/LocalizerApp.Tests.csproj" />
+  <Project Path="Localizer_App.csproj" />
+</Solution>
